@@ -20,4 +20,12 @@ TEST_CASE("solve")
     CHECK((solve(a, b) - x_ref).norm() < double_tol);
 }
 
+TEST_CASE("poly_coefficients")
+{
+    const Vector3d a{-1. / 2, 0, 1. / 2};
+    const Vector4d ref{1., 0., -0.25, 0.};
+
+    CHECK((poly_coefficients(a) - ref).norm() < double_tol);
+}
+
 #endif
