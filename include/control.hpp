@@ -25,7 +25,7 @@ namespace efp
     // }
 
     // template <typename Scalar, int degree>
-    // Matrix<Scalar, degree + 1, 1> poly_coefficients(const Matrix<Scalar, degree, 1> &roots)
+    // Matrix<Scalar, degree + 1, 1> poly_from_roots(const Matrix<Scalar, degree, 1> &roots)
     // {
     //     Matrix<Scalar, degree + 1, 1> coeffs;
     //     coeffs.setZero();
@@ -91,7 +91,7 @@ namespace efp
     //     DenType den;
     //     try
     //     {
-    //         den = poly_coefficients(am);
+    //         den = poly_from_roots(am);
     //     }
     //     catch (const std::exception &e)
     //     {
@@ -116,7 +116,7 @@ namespace efp
     //     {
     //         Matrix<typename C::Scalar, 1, C::ColsAtCompileTime> Ck_row = cm.row(k);
     //         Matrix<typename A::Scalar, num_states, 1> poly_arg = am - bm * Ck_row;
-    //         Matrix<NumType, num_states + 1, 1> num_k = poly_coefficients(poly_arg) + (dv(k) - NumType(1)) * den;
+    //         Matrix<NumType, num_states + 1, 1> num_k = poly_from_roots(poly_arg) + (dv(k) - NumType(1)) * den;
     //         num.block(k * (num_states + 1), 0, num_states + 1, 1) = num_k;
     //     }
 

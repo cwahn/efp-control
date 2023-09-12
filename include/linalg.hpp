@@ -27,6 +27,7 @@ namespace efp
         return a.completeOrthogonalDecomposition().solve(b);
     }
 
+    // todo What if input is complex matrix
     template <typename Scalar, int n>
     auto eigenvalues(const Matrix<Scalar, n, n> &a)
         -> Matrix<Complex<Scalar>, n, 1>
@@ -35,7 +36,7 @@ namespace efp
     }
 
     template <typename Scalar, int n>
-    Matrix<Scalar, n + 1, 1> poly_coefficients(const Matrix<Scalar, n, 1> &roots)
+    Matrix<Scalar, n + 1, 1> poly_from_roots(const Matrix<Scalar, n, 1> &roots)
     {
         Matrix<Scalar, n + 1, 1> p;
         p.setZero();
@@ -57,8 +58,15 @@ namespace efp
         return p;
     }
 
+    template <typename Scalar, int n>
+    auto poly_from_matrix(const Matrix<Scalar, n, n> &am)
+        -> Matrix<Complex<Scalar>, n + 1, 1>
+    {
+        return poly_from_roots(eigenvalues(am));
+    }
+
     // template <typename A, typename B, typename C, typename D, int input = 0>
-    // auto ss_to_tf(const A &am, const B &bm, const C &cm, const D &dm)
+    // auto tf_from_ss(const A &am, const B &bm, const C &cm, const D &dm)
     // {
     //     // A, B, C, D = abcd_normalize(A, B, C, D)
 
@@ -105,7 +113,7 @@ namespace efp
     //     DenType den;
     //     // try
     //     // {
-    //     den = poly_coefficients(am);
+    //     den = poly_from_roots(am);
     //     // }
     //     // catch (const std::exception &e)
     //     // {
@@ -130,7 +138,7 @@ namespace efp
     //     {
     //         Matrix<typename C::Scalar, 1, C::ColsAtCompileTime> Ck_row = cm.row(k);
     //         Matrix<typename A::Scalar, num_states, 1> poly_arg = am - bm * Ck_row;
-    //         Matrix<NumType, num_states + 1, 1> num_k = poly_coefficients(poly_arg) + (dv(k) - NumType(1)) * den;
+    //         Matrix<NumType, num_states + 1, 1> num_k = poly_from_roots(poly_arg) + (dv(k) - NumType(1)) * den;
     //         num.block(k * (num_states + 1), 0, num_states + 1, 1) = num_k;
     //     }
 

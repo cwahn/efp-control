@@ -34,15 +34,15 @@ TEST_CASE("eigenvalues")
     CHECK(floating_matrix_eq(eigenvalues(a), ref));
 }
 
-TEST_CASE("poly_coefficients")
+TEST_CASE("poly_from_roots")
 {
     SECTION("real")
     {
         const Vector3d roots{1., 1., 1.};
         const Vector4d ref{1., -3., 3., -1};
 
-        CHECK(floating_matrix_eq(poly_coefficients(roots), ref));
-        // CHECK(poly_coefficients(roots) == ref);
+        CHECK(floating_matrix_eq(poly_from_roots(roots), ref));
+        // CHECK(poly_from_roots(roots) == ref);
     }
 
     SECTION("complex")
@@ -57,17 +57,23 @@ TEST_CASE("poly_coefficients")
             Complex<double>{2., 0.},
         };
 
-        CHECK(floating_matrix_eq(poly_coefficients(roots), ref));
-        // CHECK(poly_coefficients(roots) == ref);
+        CHECK(floating_matrix_eq(poly_from_roots(roots), ref));
+        // CHECK(poly_from_roots(roots) == ref);
     }
 }
 
-// TEST_CASE("poly_coefficients")
-// {
-//     const Vector3d a{-1. / 2, 0, 1. / 2};
-//     const Vector4d ref{1., 0., -0.25, 0.};
+TEST_CASE("poly_from_matrix")
+{
+    const Matrix2d a{{0., 1. / 3.},
+                     {-1. / 2., 0}};
 
-//     CHECK((poly_coefficients(a) - ref).norm() < double_tol);
-// }
+    const Vector3<Complex<double>> ref{
+        Complex<double>{1., 0.},
+        Complex<double>{0., 0.},
+        Complex<double>{0.16666667, 0.}};
+
+    CHECK(floating_matrix_eq(poly_from_matrix(a), ref));
+    // CHECK(poly_from_matrix(a) == ref);
+}
 
 #endif
