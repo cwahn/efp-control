@@ -21,13 +21,19 @@ namespace efp
         return (a - b).norm() < std::sqrt(std::numeric_limits<double>::epsilon());
     }
 
+    template <typename MatA, typename MatB>
+    auto dot(const MatA &am, const MatB &bm)
+    {
+        return am.dot(bm);
+    }
+
     template <typename A, typename B>
     B solve(const A &a, const B &b)
     {
         return a.completeOrthogonalDecomposition().solve(b);
     }
 
-    // todo What if input is complex matrix
+    // ! What if input is complex matrix
     template <typename Scalar, int n>
     auto eigenvalues(const Matrix<Scalar, n, n> &a)
         -> Matrix<Complex<Scalar>, n, 1>
@@ -38,24 +44,22 @@ namespace efp
     template <typename Scalar, int n>
     Matrix<Scalar, n + 1, 1> poly_from_roots(const Matrix<Scalar, n, 1> &roots)
     {
-        Matrix<Scalar, n + 1, 1> p;
-        p.setZero();
-        p[0] = (Scalar)1.;
+        Matrix<Scalar, n + 1, 1> poly;
+        poly.setZero();
+        poly[0] = (Scalar)1.;
 
         const auto add_root = [&](int i, const Scalar &root)
-        {
-            const auto temp = from_function(i + 2,
+        { const auto diff = from_function(i + 2,
                                             [&](int i)
-                                            { return i == 0 ? 0. : root * p[i - 1]; });
+                                            { return i == 0 ? 0. : root * poly[i - 1]; });
 
             for_each_with_index([&](int i, const Scalar &x)
-                                { p[i] -= x; },
-                                temp);
-        };
+                                { poly[i] -= x; },
+                                diff); };
 
         for_each_with_index(add_root, roots);
 
-        return p;
+        return poly;
     }
 
     template <typename Scalar, int n>
@@ -65,38 +69,52 @@ namespace efp
         return poly_from_roots(eigenvalues(am));
     }
 
+    // todo MIMO system -> Matrix of transfer function
+    // todo Could it be actual matrix
+    // template <typename MatA, typename MatB, typename MatC, typename MatD>
+    // auto tf_from_ss(const MatA &am, const MatB &bm, const MatC &cm, const MatD &dm)
+    // {
+    //     using Scalar = typename MatD::Scalar;
+
+    //     constexpr int out_n = MatD::RowsAtCompileTime;
+    //     constexpr int in_n = MatD::ColsAtCompileTime;
+
+        
+
+    // }
+
     // template <typename A, typename B, typename C, typename D, int input = 0>
     // auto tf_from_ss(const A &am, const B &bm, const C &cm, const D &dm)
     // {
-    //     // A, B, C, D = abcd_normalize(A, B, C, D)
+    // A, B, C, D = abcd_normalize(A, B, C, D)
 
-    //     // nout, nin = D.shape
-    //     // if input >= nin:
-    //     //     raise ValueError("System does not have the input specified.")
+    // nout, nin = D.shape
+    // if input >= nin:
+    //     raise ValueError("System does not have the input specified.")
 
-    //     // # make SIMO from possibly MIMO system.
-    //     // B = B[:, input:input + 1]
-    //     // D = D[:, input:input + 1]
+    // # make SIMO from possibly MIMO system.
+    // B = B[:, input:input + 1]
+    // D = D[:, input:input + 1]
 
-    //     // try:
-    //     //     den = poly(A)
-    //     // except ValueError:
-    //     //     den = 1
+    // try:
+    //     den = poly(A)
+    // except ValueError:
+    //     den = 1
 
-    //     // if (prod(B.shape, axis=0) == 0) and (prod(C.shape, axis=0) == 0):
-    //     //     num = numpy.ravel(D)
-    //     //     if (prod(D.shape, axis=0) == 0) and (prod(A.shape, axis=0) == 0):
-    //     //         den = []
-    //     //     return num, den
+    // if (prod(B.shape, axis=0) == 0) and (prod(C.shape, axis=0) == 0):
+    //     num = numpy.ravel(D)
+    //     if (prod(D.shape, axis=0) == 0) and (prod(A.shape, axis=0) == 0):
+    //         den = []
+    //     return num, den
 
-    //     // num_states = A.shape[0]
-    //     // type_test = A[:, 0] + B[:, 0] + C[0, :] + D + 0.0
-    //     // num = numpy.empty((nout, num_states + 1), type_test.dtype)
-    //     // for k in range(nout):
-    //     //     Ck = atleast_2d(C[k, :])
-    //     //     num[k] = poly(A - dot(B, Ck)) + (D[k] - 1) * den
+    // num_states = A.shape[0]
+    // type_test = A[:, 0] + B[:, 0] + C[0, :] + D + 0.0
+    // num = numpy.empty((nout, num_states + 1), type_test.dtype)
+    // for k in range(nout):
+    //     Ck = atleast_2d(C[k, :])
+    //     num[k] = poly(A - dot(B, Ck)) + (D[k] - 1) * den
 
-    //     // return num, den
+    // return num, den
 
     //     // todo input dimension check
 

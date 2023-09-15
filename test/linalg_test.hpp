@@ -9,6 +9,30 @@
 using namespace efp;
 using namespace Eigen;
 
+TEST_CASE("matrix product")
+{
+    SECTION("vector")
+    {
+        const Vector2d av{{1., 1.}};
+        const Vector2d bv{{3., 4.}};
+        const double ref = 7.;
+
+        CHECK(dot(av, bv) == ref);
+    }
+
+    SECTION("matrix product")
+    {
+        const Matrix2d am{{1., 0.},
+                          {0., 1.}};
+
+        const Matrix2d bm{{1., 2.},
+                          {3., 4.}};
+
+        CHECK(floating_matrix_eq(am * bm, bm));
+        CHECK(floating_matrix_eq(bm * am, bm));
+    }
+}
+
 TEST_CASE("solve")
 {
     const Matrix3d a{{1., 2., 3.},
