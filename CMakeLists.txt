@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(
-    efp-control
+    efp_math
     VERSION 0.1
-    DESCRIPTION "Eager functional programming library for C++ 11"
+    DESCRIPTION "Eager functional programming library mathematics module for C++"
     LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -16,15 +16,15 @@ include(CTest)
 include(Catch)
 enable_testing()
 
-add_library(efp-control
+add_library(efp_math
     INTERFACE)
 
-target_link_libraries(efp-control
+target_link_libraries(efp_math
     INTERFACE
     efp
     eigen)
 
-target_include_directories(efp-control
+target_include_directories(efp_math
     INTERFACE
     "./include")
 
@@ -34,4 +34,3 @@ include(CPack)
 
 add_subdirectory(lib)
 add_subdirectory(test)
-add_subdirectory(include)

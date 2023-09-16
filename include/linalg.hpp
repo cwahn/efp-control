@@ -2,8 +2,11 @@
 #define LINALG_HPP_
 
 #include "complex"
+#include "tuple"
 
 #include "efp.hpp"
+#include "./sfinae_math.hpp"
+
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 
@@ -11,76 +14,96 @@ namespace efp
 {
     using namespace Eigen;
 
-    template <typename A>
-    using Complex = typename std::complex<A>;
-
-    template <typename A, typename B>
-    bool floating_matrix_eq(const A &a, const B &b)
+    template <typename DerivedA, typename DerivedB>
+    bool floating_matrix_eq(const MatrixBase<DerivedA> &a, const MatrixBase<DerivedB> &b)
     {
         // todo float
         return (a - b).norm() < std::sqrt(std::numeric_limits<double>::epsilon());
     }
 
-    template <typename MatA, typename MatB>
-    auto dot(const MatA &am, const MatB &bm)
+    // template <typename DerivedA, typename DerivedB>
+    // auto solve(const MatrixBase<DerivedA> &am, const MatrixBase<DerivedB> &bm)
+    // // -> decltype(am.colPivHouseholderQr().solve(bm))
+    // {
+    //     return am.colPivHouseholderQr().solve(bm);
+    // }
+
+    template <typename DerivedA, typename DerivedB>
+    Matrix<typename DerivedA::Scalar, DerivedA::RowsAtCompileTime, DerivedB::ColsAtCompileTime>
+    solve(const MatrixBase<DerivedA> &am, const MatrixBase<DerivedB> &bm)
     {
-        return am.dot(bm);
+        return am.colPivHouseholderQr().solve(bm);
     }
 
-    template <typename A, typename B>
-    B solve(const A &a, const B &b)
-    {
-        return a.completeOrthogonalDecomposition().solve(b);
-    }
+    // // ? What if input is complex matrix
+    // template <typename Derived>
+    // auto eigenvalues(const MatrixBase<Derived> &am)
+    // // -> decltype(EigenSolver<Matrix<typename Derived::Scalar,
+    // //                                Derived::RowsAtCompileTime,
+    // //                                Derived::ColsAtCompileTime>>{am}
+    // //                 .eigenvalues())
+    // {
+    //     return EigenSolver<Matrix<typename Derived::Scalar,
+    //                               Derived::RowsAtCompileTime,
+    //                               Derived::ColsAtCompileTime>>{am}
+    //         .eigenvalues();
+    // }
 
-    // ! What if input is complex matrix
-    template <typename Scalar, int n>
-    auto eigenvalues(const Matrix<Scalar, n, n> &a)
-        -> Matrix<Complex<Scalar>, n, 1>
-    {
-        return EigenSolver<Matrix<Scalar, n, n>>{a}.eigenvalues();
-    }
+    // template <typename Derived>
+    // using PolyFromRoots_t = EnableIf_t<Derived::ColsAtCompileTime == 1,
+    //                                    Matrix<AssertComplex_t<Scalar_t<Derived>>,
+    //                                           Derived::RowsAtCompileTime == Dynamic ? Dynamic : Derived::RowsAtCompileTime + 1,
+    //                                           1>>;
 
-    template <typename Scalar, int n>
-    Matrix<Scalar, n + 1, 1> poly_from_roots(const Matrix<Scalar, n, 1> &roots)
-    {
-        Matrix<Scalar, n + 1, 1> poly;
-        poly.setZero();
-        poly[0] = (Scalar)1.;
+    // template <typename Derived>
+    // auto poly_from_roots(const MatrixBase<Derived> &roots)
+    //     -> PolyFromRoots_t<Derived>
+    // {
+    //     PolyFromRoots_t<Derived> poly;
+    //     poly.setZero();
+    //     poly[0] = (AssertComplex_t<Scalar_t<Derived>>)1.;
 
-        const auto add_root = [&](int i, const Scalar &root)
-        { const auto diff = from_function(i + 2,
-                                            [&](int i)
-                                            { return i == 0 ? 0. : root * poly[i - 1]; });
+    //     const auto add_root = [&](int i, auto root)
+    //     { const auto diff = from_function(i + 2,
+    //                                         [&](int i)
+    //                                         { return i == 0 ? 0. : root * poly[i - 1]; });
 
-            for_each_with_index([&](int i, const Scalar &x)
-                                { poly[i] -= x; },
-                                diff); };
+    //       for_each_with_index([&](int i, auto x)
+    //                             { poly[i] -= x; },
+    //                             diff); };
 
-        for_each_with_index(add_root, roots);
+    //     for_each_with_index(add_root, roots);
 
-        return poly;
-    }
+    //     return poly;
+    // }
 
-    template <typename Scalar, int n>
-    auto poly_from_matrix(const Matrix<Scalar, n, n> &am)
-        -> Matrix<Complex<Scalar>, n + 1, 1>
-    {
-        return poly_from_roots(eigenvalues(am));
-    }
+    // template <typename Derived>
+    // auto poly_from_matrix(const MatrixBase<Derived> &am)
+    // {
+    //     return poly_from_roots(eigenvalues(am));
+    // }
 
     // todo MIMO system -> Matrix of transfer function
     // todo Could it be actual matrix
     // template <typename MatA, typename MatB, typename MatC, typename MatD>
-    // auto tf_from_ss(const MatA &am, const MatB &bm, const MatC &cm, const MatD &dm)
+    // auto tf_from_ss(const MatA &am, const MatB &bm, const MatC &cm, const MatD &dm, int n, int m)
     // {
-    //     using Scalar = typename MatD::Scalar;
+    //     // using Scalar = typename MatD::Scalar;
 
-    //     constexpr int out_n = MatD::RowsAtCompileTime;
-    //     constexpr int in_n = MatD::ColsAtCompileTime;
+    //     // constexpr int out_n = MatD::RowsAtCompileTime;
+    //     // constexpr int in_n = MatD::ColsAtCompileTime;
 
-        
+    //     const auto bm_n = bm.col(n);
+    //     const auto dm_n = dm.col(n);
 
+    //     const auto den = poly_from_matrix(am);
+
+    //     const auto cm_m = cm.row(m);
+    //     const auto dm_mn = dm_n[m];
+    //     // const auto num = poly_from_matrix(am - bm_n.dot(cm_m)) + (dm_mn - 1) * den;
+    //     const auto num = poly_from_matrix((am.array() - bm_n.dot(cm_m)).matrix()) + (dm_mn - 1.) * den.array();
+
+    //     return std::make_tuple(num, den);
     // }
 
     // template <typename A, typename B, typename C, typename D, int input = 0>

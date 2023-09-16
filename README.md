@@ -1,8 +1,8 @@
-# Eager Functional Programming - Control
+# Eager Functional Programming - Math
 
-"**Control system module of EFP**" 
+"**Math module of EFP**" 
 
-This header-only library is a control system module for the [Eager Functional Programming](github.com/cwahn/efp) library. It provides signal processing, both conventional, modern control system related features in a functional manner. 
+This header-only library is a mathematics module for the [Eager Functional Programming](github.com/cwahn/efp) library. It provides linear algebra, signal processing, both conventional, and modern control system-related features in a functional manner. 
 
 The library is separated from EFP because of the dependence on Eigen, a linear algebra library.
 
@@ -16,7 +16,7 @@ WIP
 WIP
 
 ## Tests
-EFP Control is tested with Catch2 with g++ and clang.
+EFP Math is tested with Catch2 with g++ and clang.
 
 ## Requirements
 Requires C++ 11 or later.
