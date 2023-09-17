@@ -9,6 +9,26 @@
 using namespace efp;
 using namespace Eigen;
 
+TEST_CASE("dot_product")
+{
+    const Vector3d a{1., 2., 3.};
+
+    CHECK(dot_product(a, a) == 14.);
+}
+
+TEST_CASE("mat_map")
+{
+    const Matrix2d am{{-2., -1.},
+                      {1., 0.}};
+
+    const Matrix2d refm{{4., 1.},
+                        {1., 0.}};
+
+    CHECK(is_mat_approx(
+        mat_map(square<double>, am),
+        refm));
+}
+
 TEST_CASE("solve")
 {
     const Matrix3d a{{1., 2., 3.},
@@ -18,7 +38,7 @@ TEST_CASE("solve")
     const Vector3d x_ref{-2., 1., 1.};
 
     // CHECK((solve(a, b) - x_ref).norm() < double_tol);
-    CHECK(is_approx(solve(a, b), x_ref));
+    CHECK(is_mat_approx(solve(a, b), x_ref));
 }
 
 TEST_CASE("eigenvalues")
@@ -32,7 +52,7 @@ TEST_CASE("eigenvalues")
 
     // CHECK(eigenvalues(a) == ref);
     // CHECK((eigenvalues(a) - ref).norm() < double_tol);
-    CHECK(is_approx(eigenvalues(a), ref));
+    CHECK(is_mat_approx(eigenvalues(a), ref));
 }
 
 TEST_CASE("poly_from_roots")
@@ -42,7 +62,7 @@ TEST_CASE("poly_from_roots")
         const Vector3d roots{1., 1., 1.};
         const Vector4d ref{1., -3., 3., -1};
 
-        CHECK(is_approx(poly_from_roots(roots), ref));
+        CHECK(is_mat_approx(poly_from_roots(roots), ref));
     }
 
     SECTION("complex")
@@ -57,25 +77,25 @@ TEST_CASE("poly_from_roots")
             Complex<double>{2., 0.},
         };
 
-        CHECK(is_approx(poly_from_roots(roots), ref));
+        CHECK(is_mat_approx(poly_from_roots(roots), ref));
     }
 }
 
-// TEST_CASE("poly_from_matrix")
-// {
-//     const Matrix2d a{{0., 1. / 3.},
-//                      {-1. / 2., 0}};
+TEST_CASE("characteristic_poly")
+{
+    const Matrix2d a{{0., 1. / 3.},
+                     {-1. / 2., 0}};
 
-//     const Vector3<Complex<double>> ref{
-//         Complex<double>{1., 0.},
-//         Complex<double>{0., 0.},
-//         Complex<double>{0.1666666666666666667, 0.}};
+    const Vector3<Complex<double>> ref{
+        Complex<double>{1., 0.},
+        Complex<double>{0., 0.},
+        Complex<double>{0.1666666666666666667, 0.}};
 
-//     CHECK(is_approx(poly_from_matrix(a), ref));
-//     // CHECK(poly_from_matrix(a) == ref);
-// }
+    CHECK(is_mat_approx(characteristic_poly(a), ref));
+    // CHECK(characteristic_poly(a) == ref);
+}
 
-// TEST_CASE("tf_from_ss")
+// TEST_CASE("tf_from_ss_nm")
 // {
 //     const Matrix2d am{{-2., -1.},
 //                       {1., 0.}};
@@ -83,9 +103,9 @@ TEST_CASE("poly_from_roots")
 //     const RowVector2d cm{1., 2.};
 //     const Matrix<double, 1, 1> dm{{1.}};
 
-//     const auto tf = tf_from_ss(am, bm, cm, dm, 0, 0);
-//     const auto num = std::get<0>(tf);
-//     const auto den = std::get<1>(tf);
+//     const auto tf_00 = tf_from_ss_nm(am, bm, cm, dm, 0, 0);
+//     const auto num = std::get<0>(tf_00);
+//     const auto den = std::get<1>(tf_00);
 
 //     CHECK(num == Matrix<double, 3, 1>{1., 3., 3.});
 //     CHECK(den == Matrix<double, 3, 1>{1., 2., 1.});

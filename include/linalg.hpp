@@ -18,7 +18,7 @@ namespace efp
     using Mat = MatrixBase<Derive>;
 
     template <typename A, typename B>
-    bool is_approx(const Mat<A> &am, const Mat<B> &bm)
+    bool is_mat_approx(const Mat<A> &am, const Mat<B> &bm)
     {
         return am.isApprox(bm);
     }
@@ -27,6 +27,13 @@ namespace efp
     auto dot_product(const Mat<A> &am, const Mat<B> &bm)
     {
         return am.dot(bm);
+    }
+
+    template <typename F, typename A>
+    auto mat_map(const F &f, const Mat<A> &am)
+    {
+        return am.unaryExpr([&](auto a)
+                            { return f(a); });
     }
 
     template <typename A, typename B>
@@ -42,11 +49,12 @@ namespace efp
     }
 
     template <typename A>
-    using PolyFromRoots_t = Matrix<AssertComplex_t<Scalar_t<A>>,
-                                   A::RowsAtCompileTime == Dynamic
-                                       ? Dynamic
-                                       : A::RowsAtCompileTime + 1,
-                                   1>;
+    using PolyFromRoots_t = Matrix<
+        AssertComplex_t<Scalar_t<A>>,
+        A::RowsAtCompileTime == Dynamic
+            ? Dynamic
+            : A::RowsAtCompileTime + 1,
+        1>;
 
     // ! Partial function. Wrong shape will abort the function.
     template <typename A>
@@ -80,52 +88,84 @@ namespace efp
 
     // ! Partial function. Wrong shape will abort the function.
     template <typename A>
-    auto poly_from_matrix(const Mat<A> &am)
+    auto characteristic_poly(const Mat<A> &am)
     {
         return poly_from_roots(eigenvalues(am));
     }
 
-    // template <typename DerivedNum, typename A, typename B, typename C, typename D>
-    // auto tf_num_from_ss_nm(
-    //     const Mat<DerivedNum> &num,
-    //     const Mat<A> &am,
-    //     const Mat<B> &bm,
-    //     const Mat<C> &cm,
-    //     const Mat<D> &dm,
-    //     int n,
-    //     int m)
-    // {
-    //     return poly_from_matrix((am.array() - dot_product(bm.col(n), cm.row(m))).matrix()) + (dm(m, n) - 1.) * den.array();
-    // }
+    template <typename Den, typename A, typename B, typename C, typename D>
+    auto tf_num_from_ss_nm(
+        const Mat<Den> &den,
+        const Mat<A> &am,
+        const Mat<B> &bm,
+        const Mat<C> &cm,
+        const Mat<D> &dm,
+        int n,
+        int m)
+    {
+        // todo Shape check
+        // todo
+        return (characteristic_poly((am.array() - dot_product(bm.col(n), cm.row(m))).matrix()) +
+                (dm(m, n) - 1.) * den.array())
+            .matrix()
+            .eval();
+    }
 
-    // // todo MIMO system -> Matrix of transfer function
-    // // todo Could it be actual matrix
-    // template <typename A, typename B, typename C, typename D>
-    // auto tf_from_ss(
-    //     const Mat<A> &am,
-    //     const Mat<B> &bm,
-    //     const Mat<C> &cm,
-    //     const Mat<D> &dm,
-    //     int n,
-    //     int m)
-    // {
-    //     // todo Shape check
-    //     // if ()
-    //     // {
-    //     //     abort();
-    //     // }
+    // todo MIMO system -> Matrix of transfer function
+    // todo Could it be actual matrix
+    template <typename A, typename B, typename C, typename D>
+    auto tf_from_ss_nm(
+        const Mat<A> &am,
+        const Mat<B> &bm,
+        const Mat<C> &cm,
+        const Mat<D> &dm,
+        int n,
+        int m)
+    {
+        // todo Shape check
+        // if ()
+        // {
+        //     abort();
+        // }
 
-    //     const auto den = poly_from_matrix(am);
+        const auto den = characteristic_poly(am);
+        const auto num = tf_num_from_ss_nm(den, am, bm, cm, dm, n, m);
 
-    //     const auto bm_n = bm.col(n);
-    //     const auto dm_n = dm.col(n);
-    //     const auto cm_m = cm.row(m);
-    //     const auto dm_mn = dm_n[m];
+        return std::make_tuple(num, den);
+    }
 
-    //     const auto num = poly_from_matrix((am.array() - bm_n.dot(cm_m)).matrix()) + (dm_mn - 1.) * den.array();
+    // todo MIMO system -> Matrix of transfer function
+    // todo Could it be actual matrix
+    template <typename A, typename B, typename C, typename D>
+    auto tf_from_ss(
+        const Mat<A> &am,
+        const Mat<B> &bm,
+        const Mat<C> &cm,
+        const Mat<D> &dm)
+    {
+        // todo Shape check
+        // if ()
+        // {
+        //     abort();
+        // }
 
-    //     return std::make_tuple(num, den);
-    // }
+        const auto den = characteristic_poly(am);
+
+        Matrix<
+            std::tuple<
+                decltype(characteristic_poly(am)),
+                decltype(tf_num_from_ss_nm(den, am, bm, cm, dm, 0, 0))>,
+            C::RowsAtCompileTime,
+            B::ColsAtCompileTime>
+            tfm;
+
+        const int n = bm.cols();
+        const int m = cm.rows();
+
+        const auto num = tf_num_from_ss_nm(den, am, bm, cm, dm, n, m);
+
+        return std::make_tuple(num, den);
+    }
 
     // template <typename A, typename B, typename C, typename D, int input = 0>
     // auto tf_from_ss(const A &am, const B &bm, const C &cm, const D &dm)

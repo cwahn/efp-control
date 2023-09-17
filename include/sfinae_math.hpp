@@ -10,15 +10,6 @@ namespace efp
 {
     using namespace Eigen;
 
-    template <typename... Ts>
-    struct void_t_impl
-    {
-        typedef void type;
-    };
-
-    template <typename... Ts>
-    using Void_t = typename void_t_impl<Ts...>::type;
-
     // todo existance of Scalar to indicate matrix type. May need some more
     template <typename A, typename = void>
     struct IsMatrixLike : FalseType
@@ -32,34 +23,6 @@ namespace efp
 
     template <typename MatA>
     using Scalar_t = typename MatA::Scalar;
-
-    template <typename A>
-    using Complex = typename std::complex<A>;
-
-    template <typename A>
-    struct IsComplex : FalseType
-    {
-    };
-
-    template <typename A>
-    struct IsComplex<Complex<A>> : TrueType
-    {
-    };
-
-    template <typename A>
-    struct AssertComplex
-    {
-        using Type = Complex<A>;
-    };
-
-    template <typename A>
-    struct AssertComplex<Complex<A>>
-    {
-        using Type = Complex<A>;
-    };
-
-    template <typename A>
-    using AssertComplex_t = typename AssertComplex<A>::Type;
 
     template <typename Derived>
     using PlainObject_t = typename Eigen::PlainObjectBase<Derived>::PlainObject;
