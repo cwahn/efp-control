@@ -10,6 +10,9 @@
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 
+// Size error -> abort
+// Value error -> Maybe
+
 namespace efp
 {
     using namespace Eigen;
@@ -33,7 +36,8 @@ namespace efp
     auto mat_map(const F &f, const Mat<A> &am)
     {
         return am.unaryExpr([&](auto a)
-                            { return f(a); });
+                            { return f(a); })
+            .eval();
     }
 
     template <typename A, typename B>
@@ -86,11 +90,28 @@ namespace efp
         }
     }
 
+    template <typename A>
+    auto make_real(const A &a)
+        -> EnableIf_t<IsComplex<A>::value, ComplexBase_t<A>>
+    {
+        return a.real();
+    }
+
+    template <typename A>
+    auto make_real(const A &a)
+        -> EnableIf_t<!IsComplex<A>::value, A>
+    {
+        return a;
+    }
+
     // ! Partial function. Wrong shape will abort the function.
+    // todo Real coeffs if scalar of A is real.
     template <typename A>
     auto characteristic_poly(const Mat<A> &am)
     {
-        return poly_from_roots(eigenvalues(am));
+        return mat_map([](auto x)
+                       { return make_real(x); },
+                       poly_from_roots(eigenvalues(am)));
     }
 
     template <typename Den, typename A, typename B, typename C, typename D>
@@ -104,9 +125,14 @@ namespace efp
         int m)
     {
         // todo Shape check
-        // todo
-        return (characteristic_poly((am.array() - dot_product(bm.col(n), cm.row(m))).matrix()) +
-                (dm(m, n) - 1.) * den.array())
+
+        const auto no_feed_through_complex = characteristic_poly((am.array() - dot_product(bm.col(n), cm.row(m))).matrix());
+        // ? What about non-zero coeffs
+        const auto no_feed_through = mat_map([](auto x)
+                                             { return x.real(); },
+                                             no_feed_through_complex);
+
+        return (no_feed_through + (dm(m, n) - 1.) * den.array())
             .matrix()
             .eval();
     }

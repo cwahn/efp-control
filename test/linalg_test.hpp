@@ -83,32 +83,37 @@ TEST_CASE("poly_from_roots")
 
 TEST_CASE("characteristic_poly")
 {
-    const Matrix2d a{{0., 1. / 3.},
-                     {-1. / 2., 0}};
+    SECTION("real")
+    {
+        const Matrix2d a{{0., 1. / 3.},
+                         {-1. / 2., 0}};
 
-    const Vector3<Complex<double>> ref{
-        Complex<double>{1., 0.},
-        Complex<double>{0., 0.},
-        Complex<double>{0.1666666666666666667, 0.}};
+        const Vector3d ref{
+            1.,
+            0.,
+            0.1666666666666666667};
 
-    CHECK(is_mat_approx(characteristic_poly(a), ref));
-    // CHECK(characteristic_poly(a) == ref);
+        CHECK(is_mat_approx(characteristic_poly(a), ref));
+        // CHECK(characteristic_poly(a) == ref);
+    }
+
+    // todo Complex test
 }
 
-// TEST_CASE("tf_from_ss_nm")
-// {
-//     const Matrix2d am{{-2., -1.},
-//                       {1., 0.}};
-//     const Vector2d bm{1., 0.};
-//     const RowVector2d cm{1., 2.};
-//     const Matrix<double, 1, 1> dm{{1.}};
+TEST_CASE("tf_from_ss_nm")
+{
+    const Matrix2d am{{-2., -1.},
+                      {1., 0.}};
+    const Vector2d bm{1., 0.};
+    const RowVector2d cm{1., 2.};
+    const Matrix<double, 1, 1> dm{{1.}};
 
-//     const auto tf_00 = tf_from_ss_nm(am, bm, cm, dm, 0, 0);
-//     const auto num = std::get<0>(tf_00);
-//     const auto den = std::get<1>(tf_00);
+    const auto tf_00 = tf_from_ss_nm(am, bm, cm, dm, 0, 0);
+    const auto num = std::get<0>(tf_00);
+    const auto den = std::get<1>(tf_00);
 
-//     CHECK(num == Matrix<double, 3, 1>{1., 3., 3.});
-//     CHECK(den == Matrix<double, 3, 1>{1., 2., 1.});
-// }
+    CHECK(num == Matrix<double, 3, 1>{1., 3., 3.});
+    CHECK(den == Matrix<double, 3, 1>{1., 2., 1.});
+}
 
 #endif
