@@ -60,6 +60,9 @@ namespace efp
 
     template <typename A>
     using AssertComplex_t = typename AssertComplex<A>::Type;
+
+    template <typename Derived>
+    using PlainObject_t = typename Eigen::PlainObjectBase<Derived>::PlainObject;
 }
 
 #endif

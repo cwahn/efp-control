@@ -14,93 +14,114 @@ namespace efp
 {
     using namespace Eigen;
 
-    template <typename DerivedA, typename DerivedB>
-    bool floating_matrix_eq(const MatrixBase<DerivedA> &a, const MatrixBase<DerivedB> &b)
+    template <typename Derive>
+    using Mat = MatrixBase<Derive>;
+
+    template <typename A, typename B>
+    bool is_approx(const Mat<A> &am, const Mat<B> &bm)
     {
-        // todo float
-        return (a - b).norm() < std::sqrt(std::numeric_limits<double>::epsilon());
+        return am.isApprox(bm);
     }
 
-    // template <typename DerivedA, typename DerivedB>
-    // auto solve(const MatrixBase<DerivedA> &am, const MatrixBase<DerivedB> &bm)
-    // // -> decltype(am.colPivHouseholderQr().solve(bm))
-    // {
-    //     return am.colPivHouseholderQr().solve(bm);
-    // }
-
-    template <typename DerivedA, typename DerivedB>
-    Matrix<typename DerivedA::Scalar, DerivedA::RowsAtCompileTime, DerivedB::ColsAtCompileTime>
-    solve(const MatrixBase<DerivedA> &am, const MatrixBase<DerivedB> &bm)
+    template <typename A, typename B>
+    auto dot_product(const Mat<A> &am, const Mat<B> &bm)
     {
-        return am.colPivHouseholderQr().solve(bm);
+        return am.dot(bm);
     }
 
-    // // ? What if input is complex matrix
-    // template <typename Derived>
-    // auto eigenvalues(const MatrixBase<Derived> &am)
-    // // -> decltype(EigenSolver<Matrix<typename Derived::Scalar,
-    // //                                Derived::RowsAtCompileTime,
-    // //                                Derived::ColsAtCompileTime>>{am}
-    // //                 .eigenvalues())
+    template <typename A, typename B>
+    auto solve(const Mat<A> &am, const Mat<B> &bm)
+    {
+        return am.colPivHouseholderQr().solve(bm).eval();
+    }
+
+    template <typename A>
+    auto eigenvalues(const Mat<A> &am)
+    {
+        return EigenSolver<PlainObject_t<A>>{am}.eigenvalues().eval();
+    }
+
+    template <typename A>
+    using PolyFromRoots_t = Matrix<AssertComplex_t<Scalar_t<A>>,
+                                   A::RowsAtCompileTime == Dynamic
+                                       ? Dynamic
+                                       : A::RowsAtCompileTime + 1,
+                                   1>;
+
+    // ! Partial function. Wrong shape will abort the function.
+    template <typename A>
+    auto poly_from_roots(const Mat<A> &roots)
+        -> PolyFromRoots_t<A>
+    {
+        if (A::ColsAtCompileTime != 1 && roots.cols() != 1)
+        {
+            abort();
+        }
+        else
+        {
+            PolyFromRoots_t<A> poly;
+            poly.setZero();
+            poly[0] = (AssertComplex_t<Scalar_t<A>>)1.;
+
+            const auto add_root = [&](int i, auto root)
+            { const auto diff = from_function(i + 2,
+                                            [&](int i)
+                                            { return i == 0 ? 0. : root * poly[i - 1]; });
+                                            
+            for_each_with_index([&](int i, auto x)
+                                { poly[i] -= x; },
+                                diff); };
+
+            for_each_with_index(add_root, roots);
+
+            return poly;
+        }
+    }
+
+    // ! Partial function. Wrong shape will abort the function.
+    template <typename A>
+    auto poly_from_matrix(const Mat<A> &am)
+    {
+        return poly_from_roots(eigenvalues(am));
+    }
+
+    // template <typename DerivedNum, typename A, typename B, typename C, typename D>
+    // auto tf_num_from_ss_nm(
+    //     const Mat<DerivedNum> &num,
+    //     const Mat<A> &am,
+    //     const Mat<B> &bm,
+    //     const Mat<C> &cm,
+    //     const Mat<D> &dm,
+    //     int n,
+    //     int m)
     // {
-    //     return EigenSolver<Matrix<typename Derived::Scalar,
-    //                               Derived::RowsAtCompileTime,
-    //                               Derived::ColsAtCompileTime>>{am}
-    //         .eigenvalues();
+    //     return poly_from_matrix((am.array() - dot_product(bm.col(n), cm.row(m))).matrix()) + (dm(m, n) - 1.) * den.array();
     // }
 
-    // template <typename Derived>
-    // using PolyFromRoots_t = EnableIf_t<Derived::ColsAtCompileTime == 1,
-    //                                    Matrix<AssertComplex_t<Scalar_t<Derived>>,
-    //                                           Derived::RowsAtCompileTime == Dynamic ? Dynamic : Derived::RowsAtCompileTime + 1,
-    //                                           1>>;
-
-    // template <typename Derived>
-    // auto poly_from_roots(const MatrixBase<Derived> &roots)
-    //     -> PolyFromRoots_t<Derived>
+    // // todo MIMO system -> Matrix of transfer function
+    // // todo Could it be actual matrix
+    // template <typename A, typename B, typename C, typename D>
+    // auto tf_from_ss(
+    //     const Mat<A> &am,
+    //     const Mat<B> &bm,
+    //     const Mat<C> &cm,
+    //     const Mat<D> &dm,
+    //     int n,
+    //     int m)
     // {
-    //     PolyFromRoots_t<Derived> poly;
-    //     poly.setZero();
-    //     poly[0] = (AssertComplex_t<Scalar_t<Derived>>)1.;
-
-    //     const auto add_root = [&](int i, auto root)
-    //     { const auto diff = from_function(i + 2,
-    //                                         [&](int i)
-    //                                         { return i == 0 ? 0. : root * poly[i - 1]; });
-
-    //       for_each_with_index([&](int i, auto x)
-    //                             { poly[i] -= x; },
-    //                             diff); };
-
-    //     for_each_with_index(add_root, roots);
-
-    //     return poly;
-    // }
-
-    // template <typename Derived>
-    // auto poly_from_matrix(const MatrixBase<Derived> &am)
-    // {
-    //     return poly_from_roots(eigenvalues(am));
-    // }
-
-    // todo MIMO system -> Matrix of transfer function
-    // todo Could it be actual matrix
-    // template <typename MatA, typename MatB, typename MatC, typename MatD>
-    // auto tf_from_ss(const MatA &am, const MatB &bm, const MatC &cm, const MatD &dm, int n, int m)
-    // {
-    //     // using Scalar = typename MatD::Scalar;
-
-    //     // constexpr int out_n = MatD::RowsAtCompileTime;
-    //     // constexpr int in_n = MatD::ColsAtCompileTime;
-
-    //     const auto bm_n = bm.col(n);
-    //     const auto dm_n = dm.col(n);
+    //     // todo Shape check
+    //     // if ()
+    //     // {
+    //     //     abort();
+    //     // }
 
     //     const auto den = poly_from_matrix(am);
 
+    //     const auto bm_n = bm.col(n);
+    //     const auto dm_n = dm.col(n);
     //     const auto cm_m = cm.row(m);
     //     const auto dm_mn = dm_n[m];
-    //     // const auto num = poly_from_matrix(am - bm_n.dot(cm_m)) + (dm_mn - 1) * den;
+
     //     const auto num = poly_from_matrix((am.array() - bm_n.dot(cm_m)).matrix()) + (dm_mn - 1.) * den.array();
 
     //     return std::make_tuple(num, den);
@@ -109,36 +130,6 @@ namespace efp
     // template <typename A, typename B, typename C, typename D, int input = 0>
     // auto tf_from_ss(const A &am, const B &bm, const C &cm, const D &dm)
     // {
-    // A, B, C, D = abcd_normalize(A, B, C, D)
-
-    // nout, nin = D.shape
-    // if input >= nin:
-    //     raise ValueError("System does not have the input specified.")
-
-    // # make SIMO from possibly MIMO system.
-    // B = B[:, input:input + 1]
-    // D = D[:, input:input + 1]
-
-    // try:
-    //     den = poly(A)
-    // except ValueError:
-    //     den = 1
-
-    // if (prod(B.shape, axis=0) == 0) and (prod(C.shape, axis=0) == 0):
-    //     num = numpy.ravel(D)
-    //     if (prod(D.shape, axis=0) == 0) and (prod(A.shape, axis=0) == 0):
-    //         den = []
-    //     return num, den
-
-    // num_states = A.shape[0]
-    // type_test = A[:, 0] + B[:, 0] + C[0, :] + D + 0.0
-    // num = numpy.empty((nout, num_states + 1), type_test.dtype)
-    // for k in range(nout):
-    //     Ck = atleast_2d(C[k, :])
-    //     num[k] = poly(A - dot(B, Ck)) + (D[k] - 1) * den
-
-    // return num, den
-
     //     // todo input dimension check
 
     //     using NumType = typename D::Scalar;

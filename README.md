@@ -19,7 +19,7 @@ WIP
 EFP Math is tested with Catch2 with g++ and clang.
 
 ## Requirements
-Requires C++ 11 or later.
+Requires C++ 14 or later.
 ### Dependencies
 - EFP
 - Eigen
