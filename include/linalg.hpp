@@ -103,45 +103,21 @@ namespace efp
     }
 
     template <typename Den, typename A, typename B, typename C, typename D>
-    auto tf_num_from_ss_nm(
-        const Mat<Den> &den,
-        const Mat<A> &am,
-        const Mat<B> &bm,
-        const Mat<C> &cm,
-        const Mat<D> &dm,
-        int n,
-        int m)
+    auto tf_num_from_ss_nm(const Mat<Den> &den, const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, int n, int m)
     {
         // todo Shape check
-
-        const auto no_feed_through_complex = characteristic_poly((am.array() - dot_product(bm.col(n), cm.row(m))).matrix());
-        // ? What about non-zero coeffs
-        const auto no_feed_through = mat_map([](auto x)
-                                             { return x.real(); },
-                                             no_feed_through_complex);
-
-        return (no_feed_through + (dm(m, n) - 1.) * den.array())
-            .matrix()
-            .eval();
+        const auto no_feed_through =
+            characteristic_poly((am - bm.col(n) * cm.row(m)).matrix().eval());
+        const auto feed_through = ((dm(m, n) - 1.) * den.array()).matrix();
+        return (no_feed_through + feed_through).eval();
     }
 
     // todo MIMO system -> Matrix of transfer function
     // todo Could it be actual matrix
     template <typename A, typename B, typename C, typename D>
-    auto tf_from_ss_nm(
-        const Mat<A> &am,
-        const Mat<B> &bm,
-        const Mat<C> &cm,
-        const Mat<D> &dm,
-        int n,
-        int m)
+    auto tf_from_ss_nm(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, int n, int m)
     {
         // todo Shape check
-        // if ()
-        // {
-        //     abort();
-        // }
-
         const auto den = characteristic_poly(am);
         const auto num = tf_num_from_ss_nm(den, am, bm, cm, dm, n, m);
 
@@ -151,18 +127,9 @@ namespace efp
     // todo MIMO system -> Matrix of transfer function
     // todo Could it be actual matrix
     template <typename A, typename B, typename C, typename D>
-    auto tf_from_ss(
-        const Mat<A> &am,
-        const Mat<B> &bm,
-        const Mat<C> &cm,
-        const Mat<D> &dm)
+    auto tf_from_ss(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm)
     {
         // todo Shape check
-        // if ()
-        // {
-        //     abort();
-        // }
-
         const auto den = characteristic_poly(am);
 
         Matrix<
@@ -180,56 +147,6 @@ namespace efp
 
         return std::make_tuple(num, den);
     }
-
-    // template <typename A, typename B, typename C, typename D, int input = 0>
-    // auto tf_from_ss(const A &am, const B &bm, const C &cm, const D &dm)
-    // {
-    //     // todo input dimension check
-
-    //     using NumType = typename D::Scalar;
-    //     using DenType = NumType;
-
-    //     constexpr int out_n = D::RowsAtCompileTime;
-    //     constexpr int in_n = D::ColsAtCompileTime;
-    //     static_assert(out_n < in_n, "System does not have the input specified.");
-
-    //     Matrix<typename B::Scalar, B::RowsAtCompileTime, 1> bv = bm.col(input);
-    //     Matrix<typename D::Scalar, D::RowsAtCompileTime, 1> dv = dm.col(input);
-
-    //     DenType den;
-    //     // try
-    //     // {
-    //     den = poly_from_roots(am);
-    //     // }
-    //     // catch (const std::exception &e)
-    //     // {
-    //     //     den = DenType(1);
-    //     // }
-
-    //     if (bv.prod() == 0 && cm.prod() == 0)
-    //     {
-    //         Matrix<NumType, nout, 1> num = dv.array();
-    //         if (dv.prod() == 0 && am.prod() == 0)
-    //         {
-    //             den = DenType(0);
-    //         }
-    //         return std::make_tuple(num, den);
-    //     }
-
-    //     constexpr int num_states = A::RowsAtCompileTime;
-    //     constexpr int num_outputs = nout;
-    //     Matrix<typename A::Scalar, num_states + 1, 1> num;
-
-    //     for (int k = 0; k < num_outputs; ++k)
-    //     {
-    //         Matrix<typename C::Scalar, 1, C::ColsAtCompileTime> Ck_row = cm.row(k);
-    //         Matrix<typename A::Scalar, num_states, 1> poly_arg = am - bm * Ck_row;
-    //         Matrix<NumType, num_states + 1, 1> num_k = poly_from_roots(poly_arg) + (dv(k) - NumType(1)) * den;
-    //         num.block(k * (num_states + 1), 0, num_states + 1, 1) = num_k;
-    //     }
-
-    //     return std::make_tuple(num, den);
-    // }
 }
 
 #endif
