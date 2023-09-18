@@ -32,12 +32,11 @@ namespace efp
         return am.dot(bm);
     }
 
+    // todo Accept function argument
     template <typename F, typename A>
     auto mat_map(const F &f, const Mat<A> &am)
     {
-        return am.unaryExpr([&](auto a)
-                            { return f(a); })
-            .eval();
+        return am.unaryExpr(f).eval();
     }
 
     template <typename A, typename B>
@@ -90,27 +89,16 @@ namespace efp
         }
     }
 
-    template <typename A>
-    auto make_real(const A &a)
-        -> EnableIf_t<IsComplex<A>::value, ComplexBase_t<A>>
-    {
-        return a.real();
-    }
-
-    template <typename A>
-    auto make_real(const A &a)
-        -> EnableIf_t<!IsComplex<A>::value, A>
-    {
-        return a;
-    }
-
     // ! Partial function. Wrong shape will abort the function.
-    // todo Real coeffs if scalar of A is real.
     template <typename A>
     auto characteristic_poly(const Mat<A> &am)
     {
+        constexpr bool to_complex = IsComplex<Scalar_t<A>>::value;
+        const auto e_values = eigenvalues(am);
+        const auto polys = poly_from_roots(e_values);
+
         return mat_map([](auto x)
-                       { return make_real(x); },
+                       { return complex_cast<to_complex>(x); },
                        poly_from_roots(eigenvalues(am)));
     }
 

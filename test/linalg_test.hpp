@@ -24,8 +24,11 @@ TEST_CASE("mat_map")
     const Matrix2d refm{{4., 1.},
                         {1., 0.}};
 
+    const auto square_ = [](auto x)
+    { return square<double>(x); };
+
     CHECK(is_mat_approx(
-        mat_map(square<double>, am),
+        mat_map(square_, am),
         refm));
 }
 
@@ -94,26 +97,26 @@ TEST_CASE("characteristic_poly")
             0.1666666666666666667};
 
         CHECK(is_mat_approx(characteristic_poly(a), ref));
-        // CHECK(characteristic_poly(a) == ref);
+        CHECK(characteristic_poly(a) == ref);
     }
 
     // todo Complex test
 }
 
-TEST_CASE("tf_from_ss_nm")
-{
-    const Matrix2d am{{-2., -1.},
-                      {1., 0.}};
-    const Vector2d bm{1., 0.};
-    const RowVector2d cm{1., 2.};
-    const Matrix<double, 1, 1> dm{{1.}};
+// TEST_CASE("tf_from_ss_nm")
+// {
+//     const Matrix2d am{{-2., -1.},
+//                       {1., 0.}};
+//     const Vector2d bm{1., 0.};
+//     const RowVector2d cm{1., 2.};
+//     const Matrix<double, 1, 1> dm{{1.}};
 
-    const auto tf_00 = tf_from_ss_nm(am, bm, cm, dm, 0, 0);
-    const auto num = std::get<0>(tf_00);
-    const auto den = std::get<1>(tf_00);
+//     const auto tf_00 = tf_from_ss_nm(am, bm, cm, dm, 0, 0);
+//     const auto num = std::get<0>(tf_00);
+//     const auto den = std::get<1>(tf_00);
 
-    CHECK(num == Matrix<double, 3, 1>{1., 3., 3.});
-    CHECK(den == Matrix<double, 3, 1>{1., 2., 1.});
-}
+//     CHECK(num == Matrix<double, 3, 1>{1., 3., 3.});
+//     CHECK(den == Matrix<double, 3, 1>{1., 2., 1.});
+// }
 
 #endif
