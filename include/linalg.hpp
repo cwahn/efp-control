@@ -70,7 +70,12 @@ namespace efp
         }
         else
         {
+            // Size dynamic size can't initiated like this
             PolyFromRoots_t<A> poly;
+            if (A::RowsAtCompileTime == Dynamic || A::ColsAtCompileTime == Dynamic)
+            {
+                poly.resize(roots.rows() + 1, 1);
+            }
             poly.setZero();
             poly[0] = (AssertComplex_t<Scalar_t<A>>)1.;
 
@@ -140,12 +145,21 @@ namespace efp
             B::ColsAtCompileTime>
             tfm;
 
+        if (C::RowsAtCompileTime == Dynamic || B::ColsAtCompileTime == Dynamic)
+        {
+            tfm.resize(cm.rows(), bm.cols());
+        }
+
+        const auto fill_tfm = [&](int i, int j)
+        {  const auto num = tf_num_from_ss_nm(den, am, bm, cm, dm, i, j);
+        tfm(j,i) = std::make_tuple(num, den) ; };
+
         const int n = bm.cols();
         const int m = cm.rows();
 
-        const auto num = tf_num_from_ss_nm(den, am, bm, cm, dm, n, m);
+        cartesian_for_index(fill_tfm, n, m);
 
-        return std::make_tuple(num, den);
+        return tfm;
     }
 }
 

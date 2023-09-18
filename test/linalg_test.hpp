@@ -121,4 +121,69 @@ TEST_CASE("tf_from_ss_nm")
     CHECK(is_mat_approx(den, Matrix<double, 3, 1>{1., 2., 1.}));
 }
 
+TEST_CASE("tf_from_ss")
+{
+    SECTION("static")
+    {
+        const Matrix2d am{{-2., -1.},
+                          {1., 0.}};
+
+        const Matrix2d bm{{1., 1.},
+                          {0., 0.}};
+
+        const Matrix2d cm{{1., 2.},
+                          {1., 2.}};
+
+        const Matrix2d dm{{1., 0.},
+                          {0., 1.}};
+
+        const auto tfm = tf_from_ss(am, bm, cm, dm);
+        const auto tf_00 = tfm(0, 0);
+        const auto num_00 = std::get<0>(tf_00);
+        const auto den_00 = std::get<1>(tf_00);
+
+        const auto tf_11 = tfm(1, 1);
+        const auto num_11 = std::get<0>(tf_11);
+        const auto den_11 = std::get<1>(tf_11);
+
+        // CHECK(num == Matrix<double, 3, 1>{1., 3., 3.});
+        // CHECK(den == Matrix<double, 3, 1>{1., 2., 1.});
+        CHECK(is_mat_approx(num_00, Matrix<double, 3, 1>{1., 3., 3.}));
+        CHECK(is_mat_approx(den_00, Matrix<double, 3, 1>{1., 2., 1.}));
+        CHECK(is_mat_approx(num_11, Matrix<double, 3, 1>{1., 3., 3.}));
+        CHECK(is_mat_approx(den_11, Matrix<double, 3, 1>{1., 2., 1.}));
+    }
+
+    SECTION("dynamic")
+    {
+        const MatrixXd am{{-2., -1.},
+                          {1., 0.}};
+
+        const MatrixXd bm{{1., 1.},
+                          {0., 0.}};
+
+        const MatrixXd cm{{1., 2.},
+                          {1., 2.}};
+
+        const MatrixXd dm{{1., 0.},
+                          {0., 1.}};
+
+        const auto tfm = tf_from_ss(am, bm, cm, dm);
+        const auto tf_00 = tfm(0, 0);
+        const auto num_00 = std::get<0>(tf_00);
+        const auto den_00 = std::get<1>(tf_00);
+
+        const auto tf_11 = tfm(1, 1);
+        const auto num_11 = std::get<0>(tf_11);
+        const auto den_11 = std::get<1>(tf_11);
+
+        // CHECK(num == Matrix<double, 3, 1>{1., 3., 3.});
+        // CHECK(den == Matrix<double, 3, 1>{1., 2., 1.});
+        // CHECK(is_mat_approx(num_00, Matrix<double, 3, 1>{1., 3., 3.}));
+        // CHECK(is_mat_approx(den_00, Matrix<double, 3, 1>{1., 2., 1.}));
+        // CHECK(is_mat_approx(num_11, Matrix<double, 3, 1>{1., 3., 3.}));
+        // CHECK(is_mat_approx(den_11, Matrix<double, 3, 1>{1., 2., 1.}));
+    }
+}
+
 #endif
