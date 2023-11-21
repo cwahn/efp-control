@@ -179,10 +179,10 @@ TEST_CASE("tf_from_ss")
 
         // CHECK(num == Matrix<double, 3, 1>{1., 3., 3.});
         // CHECK(den == Matrix<double, 3, 1>{1., 2., 1.});
-        // CHECK(is_mat_approx(num_00, Matrix<double, 3, 1>{1., 3., 3.}));
-        // CHECK(is_mat_approx(den_00, Matrix<double, 3, 1>{1., 2., 1.}));
-        // CHECK(is_mat_approx(num_11, Matrix<double, 3, 1>{1., 3., 3.}));
-        // CHECK(is_mat_approx(den_11, Matrix<double, 3, 1>{1., 2., 1.}));
+        CHECK(is_mat_approx(num_00, Matrix<double, 3, 1>{1., 3., 3.}));
+        CHECK(is_mat_approx(den_00, Matrix<double, 3, 1>{1., 2., 1.}));
+        CHECK(is_mat_approx(num_11, Matrix<double, 3, 1>{1., 3., 3.}));
+        CHECK(is_mat_approx(den_11, Matrix<double, 3, 1>{1., 2., 1.}));
     }
 }
 

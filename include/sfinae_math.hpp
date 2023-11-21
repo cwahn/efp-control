@@ -12,12 +12,12 @@ namespace efp
 
     // todo existance of Scalar to indicate matrix type. May need some more
     template <typename A, typename = void>
-    struct IsMatrixLike : FalseType
+    struct IsMatrixLike : False
     {
     };
 
     template <typename A>
-    struct IsMatrixLike<A, Void_t<typename A::Scalar>> : TrueType
+    struct IsMatrixLike<A, Void<typename A::Scalar>> : True
     {
     };
 

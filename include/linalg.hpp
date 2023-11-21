@@ -110,57 +110,100 @@ namespace efp
     template <typename Den, typename A, typename B, typename C, typename D>
     auto tf_num_from_ss_nm(const Mat<Den> &den, const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, int n, int m)
     {
-        // todo Shape check
         const auto no_feed_through =
             characteristic_poly((am - bm.col(n) * cm.row(m)).matrix().eval());
         const auto feed_through = ((dm(m, n) - 1.) * den.array()).matrix();
         return (no_feed_through + feed_through).eval();
     }
 
-    // todo MIMO system -> Matrix of transfer function
-    // todo Could it be actual matrix
     template <typename A, typename B, typename C, typename D>
     auto tf_from_ss_nm(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, int n, int m)
     {
-        // todo Shape check
         const auto den = characteristic_poly(am);
         const auto num = tf_num_from_ss_nm(den, am, bm, cm, dm, n, m);
 
         return std::make_tuple(num, den);
     }
 
-    // todo MIMO system -> Matrix of transfer function
-    // todo Could it be actual matrix
     template <typename A, typename B, typename C, typename D>
     auto tf_from_ss(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm)
     {
-        // todo Shape check
-        const auto den = characteristic_poly(am);
-
-        Matrix<
-            std::tuple<
-                decltype(characteristic_poly(am)),
-                decltype(tf_num_from_ss_nm(den, am, bm, cm, dm, 0, 0))>,
-            C::RowsAtCompileTime,
-            B::ColsAtCompileTime>
+        Matrix<std::tuple<decltype(characteristic_poly(am)),
+                          decltype(tf_num_from_ss_nm(characteristic_poly(am), am, bm, cm, dm, 0, 0))>,
+               C::RowsAtCompileTime,
+               B::ColsAtCompileTime>
             tfm;
+
+        const int n = bm.cols();
+        const int m = cm.rows();
 
         if (C::RowsAtCompileTime == Dynamic || B::ColsAtCompileTime == Dynamic)
         {
-            tfm.resize(cm.rows(), bm.cols());
+            tfm.resize(m, n);
         }
+
+        const auto den = characteristic_poly(am);
 
         const auto fill_tfm = [&](int i, int j)
         {  const auto num = tf_num_from_ss_nm(den, am, bm, cm, dm, i, j);
         tfm(j,i) = std::make_tuple(num, den) ; };
 
-        const int n = bm.cols();
-        const int m = cm.rows();
-
         cartesian_for_index(fill_tfm, n, m);
 
         return tfm;
     }
+
+    template <typename A, typename B>
+    auto ss_from_tf(const Mat<A> &am, const Mat<B> &bm)
+    {
+        const auto m = num.rows();
+        const auto k = den.rows();
+
+        if (m > k)
+        {
+            abort();
+        }
+    }
+
+    template <typename A, typename B, typename C, typename D>
+    auto gbt(
+        const Mat<A> &am,
+        const Mat<B> &bm,
+        const Mat<C> &cm,
+        const Mat<D> &dm,
+        const double &dt,
+        const double &alpha)
+    {
+        // todo static size check
+        const auto ima = PlainObject_t<A>::Identity(am.rows(), am.cols());
+        const auto ima_alpha_dt_am = ima - alpha * dt * am;
+
+        const auto dam = solve(ima_alpha_dt_am, ima + (1. - alpha) * dt * am);
+        const auto dbm = solve(ima_alpha_dt_am, dt * bm);
+        const auto dcm = solve(ima_alpha_dt_am.transpose(), cm.transpose());
+        const auto ddm = dm + alpha * (cm * dbm);
+
+        return std::make_tuple(dam, dbm, dcm, ddm);
+    }
+
+    template <typename A, typename B, typename C, typename D>
+    auto c2d_ss_euler(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, const double &dt)
+    {
+        return gbt(am, bm, cm, dm, dt, 0.);
+    }
+
+    template <typename A, typename B, typename C, typename D>
+    auto c2d_ss_tustin(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, const double &dt)
+    {
+        return gbt(am, bm, cm, dm, dt, 0.5);
+    }
+
+    template <typename A, typename B, typename C, typename D>
+    auto c2d_ss_backward_diff(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, const double &dt)
+    {
+        return gbt(am, bm, cm, dm, dt, 1.);
+    }
+
 }
 
 #endif
