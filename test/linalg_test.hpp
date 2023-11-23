@@ -186,4 +186,48 @@ TEST_CASE("tf_from_ss")
     }
 }
 
+TEST_CASE("KalmanFilter Test", "[KalmanFilter]")
+{
+    // Define the system matrices for a known example
+    Matrix2d a;             // State transition matrix
+    Matrix<double, 2, 1> b; // Control input matrix
+    Matrix<double, 1, 2> c; // Measurement matrix
+    Matrix<double, 1, 1> d; // Feedforward matrix
+    Matrix2d q;             // Process noise covariance
+    Matrix<double, 1, 1> r; // Measurement noise covariance
+
+    // Initialize matrices with values (example values here, use real ones for your system)
+    a << 1.0, 1.0,
+        0.0, 1.0;
+    b << 0.0,
+        1.0;
+    c << 1.0, 0.0;
+    d << 0.0;
+    q << 0.1, 0.0,
+        0.0, 0.1;
+    r << 0.1;
+
+    // Create an instance of the KalmanFilter
+    KalmanFilter<Matrix2d, Matrix<double, 2, 1>, Matrix<double, 1, 2>, Matrix<double, 1, 1>, Matrix2d, Matrix<double, 1, 1>> filter(a, b, c, d, q, r);
+
+    // Define the initial state and input
+    Matrix<double, 1, 1> z; // Sensor measurement
+    Matrix<double, 1, 1> u; // Control input
+
+    // Initialize state and input (example values, adjust as necessary)
+    z << 1.0;
+    u << 1.0;
+
+    // Expected state after one update (example value, calculate based on your system)
+    Matrix<double, 2, 1> expected_state;
+    expected_state << 1.0, 1.0;
+
+    // Perform the update with the filter
+    Matrix<double, 2, 1> state_estimate = filter(z, u);
+
+    // Check if the state estimate matches the expected state
+    // CHECK(is_mat_approx(state_estimate, expected_state));
+    CHECK(state_estimate == expected_state);
+}
+
 #endif

@@ -13,10 +13,10 @@
 // Size error -> abort
 // Value error -> Maybe
 
+using namespace Eigen;
+
 namespace efp
 {
-    using namespace Eigen;
-
     template <typename Derive>
     using Mat = MatrixBase<Derive>;
 
@@ -52,7 +52,7 @@ namespace efp
     }
 
     template <typename A>
-    using PolyFromRoots_t = Matrix<
+    using PolyFromRoots = Matrix<
         AssertComplex_t<Scalar_t<A>>,
         A::RowsAtCompileTime == Dynamic
             ? Dynamic
@@ -62,7 +62,7 @@ namespace efp
     // ! Partial function. Wrong shape will abort the function.
     template <typename A>
     auto poly_from_roots(const Mat<A> &roots)
-        -> PolyFromRoots_t<A>
+        -> PolyFromRoots<A>
     {
         if (A::ColsAtCompileTime != 1 && roots.cols() != 1)
         {
@@ -71,7 +71,7 @@ namespace efp
         else
         {
             // Size dynamic size can't initiated like this
-            PolyFromRoots_t<A> poly;
+            PolyFromRoots<A> poly;
             if (A::RowsAtCompileTime == Dynamic || A::ColsAtCompileTime == Dynamic)
             {
                 poly.resize(roots.rows() + 1, 1);
@@ -88,7 +88,9 @@ namespace efp
                                 { poly[i] -= x; },
                                 diff); };
 
-            for_each_with_index(add_root, roots);
+            const auto tmp = roots.eval();
+
+            for_each_with_index(add_root, VectorView<const Scalar_t<A>>(tmp.data(), tmp.size(), tmp.size()));
 
             return poly;
         }
@@ -153,17 +155,17 @@ namespace efp
         return tfm;
     }
 
-    template <typename A, typename B>
-    auto ss_from_tf(const Mat<A> &am, const Mat<B> &bm)
-    {
-        const auto m = num.rows();
-        const auto k = den.rows();
+    // template <typename A, typename B>
+    // auto ss_from_tf(const Mat<A> &am, const Mat<B> &bm)
+    // {
+    //     const auto m = num.rows();
+    //     const auto k = den.rows();
 
-        if (m > k)
-        {
-            abort();
-        }
-    }
+    //     if (m > k)
+    //     {
+    //         abort();
+    //     }
+    // }
 
     template <typename A, typename B, typename C, typename D>
     auto gbt(
@@ -203,6 +205,68 @@ namespace efp
     {
         return gbt(am, bm, cm, dm, dt, 1.);
     }
+
+    template <typename A, typename B, typename C, typename D, typename Q, typename R>
+    class KalmanFilter
+    {
+    public:
+        using State = Matrix<Scalar_t<A>,
+                             A::RowsAtCompileTime, 1>;
+        explicit KalmanFilter(
+            const Mat<A> &a,
+            const Mat<B> &b,
+            const Mat<C> &c,
+            const Mat<D> &d,
+            const Mat<Q> &q,
+            const Mat<R> &r)
+            : a_(a),
+              b_(b),
+              c_(c),
+              d_(d),
+              q_(q),
+              r_(r),
+              x_(State::Zero(a.rows(), 1)),
+              p_(A::Zero(a.rows(), a.rows()))
+        {
+        }
+
+        template <typename Z, typename U>
+        auto operator()(const Mat<Z> &z, const Mat<U> &u)
+            -> State
+        {
+            // Predict
+            x_ = a_ * x_ + b_ * u;
+            p_ = a_ * p_ * a_.transpose() + q_;
+
+            // Update
+            const auto y = z - (c_ * x_ + d_ * u);
+            const auto s = c_ * p_ * c_.transpose() + r_;
+            const auto k = p_ * c_.transpose() * s.inverse();
+            x_ = x_ + k * y;
+            p_ = (A::Identity(p_.rows(), p_.cols()) - k * c_) * p_;
+
+            return x_;
+        }
+
+        const State state_estimate() const
+        {
+            return x_;
+        }
+        const A estimate_covariance() const
+        {
+            return p_;
+        }
+
+    private:
+        A a_;     // State transition matrix
+        B b_;     // Control input matrix
+        C c_;     // Measurement matrix
+        D d_;     // Feedforward (direct transmission) matrix
+        Q q_;     // Process noise covariance
+        R r_;     // Measurement noise covariance
+        State x_; // State estimate
+        A p_;     // Estimate covariance
+    };
 
 }
 
