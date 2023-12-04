@@ -177,13 +177,13 @@ namespace efp
         const double &alpha)
     {
         // todo static size check
-        const auto ima = PlainObject_t<A>::Identity(am.rows(), am.cols());
+        const auto ima = MatrixXd::Identity(am.rows(), am.rows());
         const auto ima_alpha_dt_am = ima - alpha * dt * am;
 
-        const auto dam = solve(ima_alpha_dt_am, ima + (1. - alpha) * dt * am);
+        const auto dam = solve(ima_alpha_dt_am, ima + (1.0 - alpha) * dt * am);
         const auto dbm = solve(ima_alpha_dt_am, dt * bm);
-        const auto dcm = solve(ima_alpha_dt_am.transpose(), cm.transpose());
-        const auto ddm = dm + alpha * (cm * dbm);
+        const auto dcm = solve(ima_alpha_dt_am.transpose(), cm.transpose()).transpose().eval();
+        const auto ddm = dm + alpha * (cm * dbm).eval();
 
         return std::make_tuple(dam, dbm, dcm, ddm);
     }
