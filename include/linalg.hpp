@@ -90,7 +90,7 @@ namespace efp
 
             const auto tmp = roots.eval();
 
-            for_each_with_index(add_root, VectorView<const Scalar_t<A>>(tmp.data(), tmp.size(), tmp.size()));
+            for_each_with_index(add_root, VectorView<const Scalar_t<A>>(tmp.data(), tmp.size()));
 
             return poly;
         }
