@@ -25,6 +25,12 @@ namespace efp
     {
         return am.isApprox(bm);
     }
+    
+    template <typename A, typename B>
+    bool is_mat_approx(const Mat<A> &am, const Mat<B> &bm, const double &precision)
+    {
+        return am.isApprox(bm, precision);
+    }
 
     template <typename A, typename B>
     auto dot_product(const Mat<A> &am, const Mat<B> &bm)
@@ -183,7 +189,7 @@ namespace efp
         const auto dam = solve(ima_alpha_dt_am, ima + (1.0 - alpha) * dt * am);
         const auto dbm = solve(ima_alpha_dt_am, dt * bm);
         const auto dcm = solve(ima_alpha_dt_am.transpose(), cm.transpose()).transpose().eval();
-        const auto ddm = dm + alpha * (cm * dbm).eval();
+        const auto ddm = (dm + alpha * cm * dbm).eval();
 
         return std::make_tuple(dam, dbm, dcm, ddm);
     }
