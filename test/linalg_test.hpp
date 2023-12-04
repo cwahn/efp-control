@@ -185,6 +185,47 @@ TEST_CASE("tf_from_ss")
         CHECK(is_mat_approx(den_11, Matrix<double, 3, 1>{1., 2., 1.}));
     }
 }
+TEST_CASE("c2d")
+{
+    SECTION("static_or_dyn_0.5")
+    {
+        const MatrixXd am{{0., 1.},
+                          {-10., -3.}};
+
+        const MatrixXd bm{{0., 0.},
+                          {10., 0.}};
+
+        const MatrixXd cm{{1., 0.},
+                          {0., 0.}};
+
+        const MatrixXd dm{{0., 0.},
+                          {0., 0.}};
+
+        const auto dt = 0.1;
+        const auto alpha = 0.5;
+        const auto X = gbt(am, bm, cm, dm, 0.1, 0.5);
+
+        const MatrixXd dam{{0.95744681, 0.08510638},
+                           {-0.85106383, 0.70212766}};
+        const MatrixXd dbm{{0.04255319, 0.},
+                           {0.85106383, 0.}};
+        const MatrixXd dcm{{0.9787234, 0.04255319},
+                           {0., 0.}};
+        const MatrixXd ddm{{0.0212766, 0.},
+                           {0., 0.}};
+
+        // std::cout << std::get<0>(X) << std::endl;
+        // std::cout << std::get<1>(X) << std::endl;
+        // std::cout << std::get<2>(X) << std::endl;
+        // std::cout << std::get<3>(X) << std::endl;
+
+        const double eps = 1e-5;
+        CHECK(is_mat_approx(std::get<0>(X), dam, eps));
+        CHECK(is_mat_approx(std::get<1>(X), dbm, eps));
+        CHECK(is_mat_approx(std::get<2>(X), dcm, eps));
+        CHECK(is_mat_approx(std::get<3>(X), ddm, eps));
+    }
+}
 
 TEST_CASE("KalmanFilter Test", "[KalmanFilter]")
 {
