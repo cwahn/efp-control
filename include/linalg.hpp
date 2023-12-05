@@ -9,6 +9,7 @@
 
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
+#include "unsupported/Eigen/MatrixFunctions"
 
 // Size error -> abort
 // Value error -> Maybe
@@ -173,6 +174,24 @@ namespace efp
     //     }
     // }
 
+    /* 
+        Transform a continuous to a discrete state-space system.
+
+        Implemetation from:
+        https://github.com/scipy/scipy/blob/v1.11.4/scipy/signal/_lti_conversion.py
+    */
+
+    /* 
+        Generalized bilinear transformation (gbt) method
+
+        based on:
+        http://techteach.no/publications/discretetime_signals_systems/discrete.pdf
+
+        G. Zhang, X. Chen, and T. Chen, Digital redesign via the generalized
+        bilinear transformation, Int. J. Control, vol. 82, no. 4, pp. 741-754,
+        2009.
+        (https://www.mypolyuweb.hk/~magzhang/Research/ZCC09_IJC.pdf)
+    */
     template <typename A, typename B, typename C, typename D>
     auto gbt(
         const Mat<A> &am,
@@ -200,6 +219,7 @@ namespace efp
         return gbt(am, bm, cm, dm, dt, 0.);
     }
 
+    // Tustin's bilinear approximation
     template <typename A, typename B, typename C, typename D>
     auto c2d_ss_tustin(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, const double &dt)
     {
@@ -210,6 +230,41 @@ namespace efp
     auto c2d_ss_backward_diff(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, const double &dt)
     {
         return gbt(am, bm, cm, dm, dt, 1.);
+    }
+
+    // Zero-Order Hold (zoh) method
+    template <typename A, typename B, typename C, typename D>
+    auto c2d_ss_zoh(const Mat<A> &am, const Mat<B> &bm, const Mat<C> &cm, const Mat<D> &dm, const double &dt)
+    {
+        /*
+            We need to build squre matrix size of am.rows() + bm.cols()
+            upperside of Matrix is filled with am , bm
+            and lowersied is filled with zeros
+            am   ...    bm  ...
+            .
+            .
+            .
+            0    ...   0   ...
+            .          .
+            .          .
+            .          .       0
+        */
+
+        // Build an exponential matrix.
+        // Need to stack zeros under the a and b matrices.
+        const auto em_lower = MatrixXd::Zero(bm.cols(), am.rows() + bm.cols());
+        auto em = MatrixXd(am.rows() + bm.cols(), am.cols() + bm.cols());
+        em << am, bm, em_lower;
+
+        const auto ms = (dt * em).exp();//.block(0, 0, am.rows(), am.cols() + bm.cols());
+
+        // Dispose of the lower rows
+        const auto dam = ms.block(0, 0, am.rows(), am.cols()).eval();
+        const auto dbm = ms.block(0, am.cols(), am.rows(), bm.cols()).eval();
+        const auto dcm = cm.eval();
+        const auto ddm = dm.eval();
+
+        return std::make_tuple(dam, dbm, dcm, ddm);
     }
 
     template <typename A, typename B, typename C, typename D, typename Q, typename R>
