@@ -9,8 +9,7 @@
 using namespace efp;
 using namespace Eigen;
 
-TEST_CASE("Element_t_Eigen")
-{
+TEST_CASE("Element_t_Eigen") {
     CHECK(IsSame<Element_t<Matrix3d>, double>::value);
     CHECK(IsSame<Element_t<Vector3d>, double>::value);
 }

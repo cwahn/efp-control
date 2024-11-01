@@ -3,10 +3,6 @@
 
 #include "control.hpp"
 
-namespace efp
-{
-
-
-}
+namespace efp {}
 
 #endif

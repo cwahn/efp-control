@@ -10,11 +10,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 
 # set(CMAKE_CXX_COMPILER /usr/bin/g++)
-find_package(Catch2 3 REQUIRED)
 
-include(CTest)
+if(NOT Catch2_FOUND)
+message("Catch2 not found on the system.\nBuild from source.")
+FetchContent_Declare(
+    Catch2
+    URL https://github.com/catchorg/Catch2/archive/refs/tags/v3.4.0.tar.gz
+    URL_HASH MD5=2c802a4938ed842e2942c60d1d231bb7
+    )
+    FetchContent_MakeAvailable(Catch2)
+endif()
+    
+find_package(Catch2 3)
+
 include(Catch)
 enable_testing()
+
+include(CTest)
 
 add_library(efp_math
     INTERFACE)
