@@ -7,20 +7,20 @@
 #include "Eigen/Dense"
 
 namespace efp {
-using namespace Eigen;
+    using namespace Eigen;
 
-// todo existance of Scalar to indicate matrix type. May need some more
-template<typename A, typename = void>
-struct IsMatrixLike: False {};
+    // todo existance of Scalar to indicate matrix type. May need some more
+    template <typename A, typename = void>
+    struct IsMatrixLike : False {};
 
-template<typename A>
-struct IsMatrixLike<A, Void<typename A::Scalar>>: True {};
+    template <typename A>
+    struct IsMatrixLike<A, Void<typename A::Scalar>> : True {};
 
-template<typename MatA>
-using Scalar_t = typename MatA::Scalar;
+    template <typename MatA>
+    using Scalar_t = typename MatA::Scalar;
 
-template<typename Derived>
-using PlainObject_t = typename Eigen::PlainObjectBase<Derived>::PlainObject;
-}  // namespace efp
+    template <typename Derived>
+    using PlainObject_t = typename Eigen::PlainObjectBase<Derived>::PlainObject;
+} // namespace efp
 
 #endif

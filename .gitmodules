@@ -1,6 +1,0 @@
-[submodule "lib/efp"]
-	path = lib/efp
-	url = https://github.com/cwahn/efp.git
-[submodule "lib/eigen"]
-	path = lib/eigen
-	url = https://gitlab.com/libeigen/eigen.git
